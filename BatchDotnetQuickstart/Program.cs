@@ -296,10 +296,15 @@ namespace BatchDotNetQuickstart
             };
 
             // Construct the SAS URL for blob
-            string sasBlobToken = blobData.GetSharedAccessSignature(sasConstraints);
-            string blobSasUri = String.Format("{0}{1}", blobData.Uri, sasBlobToken);
+            //string sasBlobToken = blobData.GetSharedAccessSignature(sasConstraints);
+            //string blobSasUri = String.Format("{0}{1}", blobData.Uri, sasBlobToken);
 
-            return ResourceFile.FromUrl(blobSasUri, filePath);
+
+            // New/Modified code here
+            string sasContainerToken = container.GetSharedAccessSignature(sasConstraints);
+            string containerSasUri = String.Format("{0}{1}", container.Uri, sasContainerToken);
+
+            return ResourceFile.FromStorageContainerUrl(containerSasUri);
         }
 
     }
