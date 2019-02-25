@@ -16,28 +16,28 @@ namespace BatchDotNetQuickstart
         // Update the Batch and Storage account credential strings below with the values unique to your accounts.
         // These are used when constructing connection strings for the Batch and Storage client objects.
 
-        
+
         // Batch account credentials
-        private const string BatchAccountName = "";
-        private const string BatchAccountKey = "";
-        private const string BatchAccountUrl = "";
+        private const string BatchAccountName = "laurenbatchaccount";
+        private const string BatchAccountKey = "pZynEzZYPvSf7c7iaaGKRmHAK8Ggkl1PR+lDY8KqvSXb5dFF8n5iIw74AkTC1nj9sVT2DFoa8wVpo8rdtV34Sg==";
+        private const string BatchAccountUrl = "https://laurenbatchaccount.westus.batch.azure.com";
 
         // Storage account credentials
-        private const string StorageAccountName = "";
-        private const string StorageAccountKey = "";
+        private const string StorageAccountName = "laurenstorageaccount";
+        private const string StorageAccountKey = "moAW22J+T+cbsHqN3aW+7poff47bn1kaFxk+3MmFWPjvHbe5uueMkjMEVmZaxqqnY4YUrFZ/7BJXwGqylpC1rA==";
 
         // Batch resource settings
         private const string PoolId = "DotNetQuickstartPool";
         private const string JobId = "DotNetQuickstartJob";
         private const int PoolNodeCount = 2;
         private const string PoolVMSize = "STANDARD_A1_v2";
-        
+
 
 
         static void Main(string[] args)
         {
 
-            if (String.IsNullOrEmpty(BatchAccountName) || 
+            if (String.IsNullOrEmpty(BatchAccountName) ||
                 String.IsNullOrEmpty(BatchAccountKey) ||
                 String.IsNullOrEmpty(BatchAccountUrl) ||
                 String.IsNullOrEmpty(StorageAccountName) ||
@@ -127,20 +127,20 @@ namespace BatchDotNetQuickstart
                     List<CloudTask> tasks = new List<CloudTask>();
 
                     // Create each of the tasks to process one of the input files. 
-
                     for (int i = 0; i < inputFiles.Count; i++)
                     {
                         string taskId = String.Format("Task{0}", i);
                         string inputFilename = inputFiles[i].FilePath;
-                        string taskCommandLine = String.Format("cmd /c type {0}", inputFilename);
+                        string taskCommandLine = String.Format("cmd /c type {0}", inputFilePaths[i]);
 
                         CloudTask task = new CloudTask(taskId, taskCommandLine);
-                        task.ResourceFiles = new List<ResourceFile> { inputFiles[i] };
+                        task.ResourceFiles = new List<ResourceFile>();
+                        task.ResourceFiles.Add(inputFiles[i]);
                         tasks.Add(task);
                     }
 
                     // Add all tasks to the job.
-                    batchClient.JobOperations.AddTask(JobId, tasks);
+                    batchClient.JobOperations.AddTaskAsync(JobId, tasks);
 
 
                     // Monitor task success/failure, specifying a maximum amount of time to wait for the tasks to complete.
@@ -166,6 +166,7 @@ namespace BatchDotNetQuickstart
                         Console.WriteLine("Task: {0}", task.Id);
                         Console.WriteLine("Node: {0}", nodeId);
                         Console.WriteLine("Standard out:");
+                        
                         Console.WriteLine(task.GetNodeFile(Constants.StandardOutFileName).ReadAsString());
                     }
 
@@ -202,7 +203,7 @@ namespace BatchDotNetQuickstart
                 Console.WriteLine("Sample complete, hit ENTER to exit...");
                 Console.ReadLine();
             }
-            
+
         }
 
         private static void CreateBatchPool(BatchClient batchClient, VirtualMachineConfiguration vmConfiguration)
@@ -292,15 +293,14 @@ namespace BatchDotNetQuickstart
             SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy
             {
                 SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
-                Permissions = SharedAccessBlobPermissions.Read
+                Permissions = SharedAccessBlobPermissions.Read | SharedAccessBlobPermissions.List
             };
 
-            // Construct the SAS URL for blob
-            string sasBlobToken = blobData.GetSharedAccessSignature(sasConstraints);
-            string blobSasUri = String.Format("{0}{1}", blobData.Uri, sasBlobToken);
+            // Construct the container SAS URL
+            string sasToken = container.GetSharedAccessSignature(sasConstraints);
+            string containerSasUri = String.Format("{0}{1}", container.Uri, sasToken);
 
-            return ResourceFile.FromUrl(blobSasUri, filePath);
+            return ResourceFile.FromStorageContainerUrl(containerSasUri);
         }
-
     }
 }
