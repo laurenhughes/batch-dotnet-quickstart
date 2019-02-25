@@ -166,7 +166,6 @@ namespace BatchDotNetQuickstart
                         Console.WriteLine("Task: {0}", task.Id);
                         Console.WriteLine("Node: {0}", nodeId);
                         Console.WriteLine("Standard out:");
-                        
                         Console.WriteLine(task.GetNodeFile(Constants.StandardOutFileName).ReadAsString());
                     }
 
@@ -286,21 +285,10 @@ namespace BatchDotNetQuickstart
 
             CloudBlobContainer container = blobClient.GetContainerReference(containerName);
             CloudBlockBlob blobData = container.GetBlockBlobReference(blobName);
+            
             blobData.UploadFromFileAsync(filePath).Wait();
 
-            // Set the expiry time and permissions for the blob shared access signature. In this case, no start time is specified,
-            // so the shared access signature becomes valid immediately
-            SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy
-            {
-                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
-                Permissions = SharedAccessBlobPermissions.Read | SharedAccessBlobPermissions.List
-            };
-
-            // Construct the container SAS URL
-            string sasToken = container.GetSharedAccessSignature(sasConstraints);
-            string containerSasUri = String.Format("{0}{1}", container.Uri, sasToken);
-
-            return ResourceFile.FromStorageContainerUrl(containerSasUri);
+            return ResourceFile.FromAutoStorageContainer(containerName);
         }
     }
 }
