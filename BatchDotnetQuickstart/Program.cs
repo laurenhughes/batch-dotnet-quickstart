@@ -16,28 +16,28 @@ namespace BatchDotNetQuickstart
         // Update the Batch and Storage account credential strings below with the values unique to your accounts.
         // These are used when constructing connection strings for the Batch and Storage client objects.
 
-
+        
         // Batch account credentials
-        private const string BatchAccountName = "laurenbatchaccount";
-        private const string BatchAccountKey = "pZynEzZYPvSf7c7iaaGKRmHAK8Ggkl1PR+lDY8KqvSXb5dFF8n5iIw74AkTC1nj9sVT2DFoa8wVpo8rdtV34Sg==";
-        private const string BatchAccountUrl = "https://laurenbatchaccount.westus.batch.azure.com";
+        private const string BatchAccountName = "";
+        private const string BatchAccountKey = "";
+        private const string BatchAccountUrl = "";
 
         // Storage account credentials
-        private const string StorageAccountName = "laurenstorageaccount";
-        private const string StorageAccountKey = "moAW22J+T+cbsHqN3aW+7poff47bn1kaFxk+3MmFWPjvHbe5uueMkjMEVmZaxqqnY4YUrFZ/7BJXwGqylpC1rA==";
+        private const string StorageAccountName = "";
+        private const string StorageAccountKey = "";
 
         // Batch resource settings
         private const string PoolId = "DotNetQuickstartPool";
         private const string JobId = "DotNetQuickstartJob";
         private const int PoolNodeCount = 2;
         private const string PoolVMSize = "STANDARD_A1_v2";
-
+        
 
 
         static void Main(string[] args)
         {
 
-            if (String.IsNullOrEmpty(BatchAccountName) ||
+            if (String.IsNullOrEmpty(BatchAccountName) || 
                 String.IsNullOrEmpty(BatchAccountKey) ||
                 String.IsNullOrEmpty(BatchAccountUrl) ||
                 String.IsNullOrEmpty(StorageAccountName) ||
@@ -127,20 +127,20 @@ namespace BatchDotNetQuickstart
                     List<CloudTask> tasks = new List<CloudTask>();
 
                     // Create each of the tasks to process one of the input files. 
+
                     for (int i = 0; i < inputFiles.Count; i++)
                     {
                         string taskId = String.Format("Task{0}", i);
                         string inputFilename = inputFiles[i].FilePath;
-                        string taskCommandLine = String.Format("cmd /c type {0}", inputFilePaths[i]);
+                        string taskCommandLine = String.Format("cmd /c type {0}", inputFilename);
 
                         CloudTask task = new CloudTask(taskId, taskCommandLine);
-                        task.ResourceFiles = new List<ResourceFile>();
-                        task.ResourceFiles.Add(inputFiles[i]);
+                        task.ResourceFiles = new List<ResourceFile> { inputFiles[i] };
                         tasks.Add(task);
                     }
 
                     // Add all tasks to the job.
-                    batchClient.JobOperations.AddTaskAsync(JobId, tasks);
+                    batchClient.JobOperations.AddTask(JobId, tasks);
 
 
                     // Monitor task success/failure, specifying a maximum amount of time to wait for the tasks to complete.
@@ -202,7 +202,7 @@ namespace BatchDotNetQuickstart
                 Console.WriteLine("Sample complete, hit ENTER to exit...");
                 Console.ReadLine();
             }
-
+            
         }
 
         private static void CreateBatchPool(BatchClient batchClient, VirtualMachineConfiguration vmConfiguration)
@@ -278,14 +278,12 @@ namespace BatchDotNetQuickstart
         private static ResourceFile UploadFileToContainer(CloudBlobClient blobClient, string containerName, string filePath)
         {
             Console.WriteLine("Uploading file {0} to container [{1}]...", filePath, containerName);
-
             string blobName = Path.GetFileName(filePath);
 
             filePath = Path.Combine(Environment.CurrentDirectory, filePath);
-
             CloudBlobContainer container = blobClient.GetContainerReference(containerName);
             CloudBlockBlob blobData = container.GetBlockBlobReference(blobName);
-            
+
             blobData.UploadFromFileAsync(filePath).Wait();
 
             return ResourceFile.FromAutoStorageContainer(containerName);
